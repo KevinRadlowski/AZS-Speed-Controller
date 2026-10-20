@@ -2,7 +2,7 @@
 
 Unofficial **portable Windows x64** speed controller for *Azeroth Survivors*. Community-developed; not affiliated with the game developers. Distribution should follow the game developers' permission and any applicable game rules.
 
-> **v1.3.0-rc1 source candidate:** the earlier RC1 compiled and ran on the maintainer's Windows PC, including a portable-folder test. Additional source fixes in this package have **not** yet been rebuilt or retested. Clean-PC validation remains pending.
+> **Current pre-release: v1.3.0-rc3.** The maintainer confirmed local Windows x64 operation after the DLL validation fix, and GitHub Actions Windows build #3 passed at commit `1cccc8a`. Independent clean-PC testing and reproducible-build verification remain pending.
 
 ## Features
 
@@ -15,7 +15,7 @@ Unofficial **portable Windows x64** speed controller for *Azeroth Survivors*. Co
 
 ## Usage
 
-1. Download an official release archive from the project's GitHub Releases (once published).
+1. Download an official pre-release archive from [GitHub Releases](https://github.com/KevinRadlowski/AZS-Speed-Controller/releases). Read the antivirus disclosure below before running it.
 2. Extract **both** `AZSSpeedController.exe` and `AZSSpeedHook.dll` into the same writable folder.
 3. Launch the game and controller; no installation required.
 4. Click the gear icon for settings. Open **Keyboard Shortcuts** to remap any action. Click a row and press a combination; `Delete` clears it, `Esc` cancels. Duplicate or OS-reserved combinations are rejected.
@@ -50,7 +50,7 @@ Release output is `build\Release\AZSSpeedController.exe` and `AZSSpeedHook.dll`.
 
 ## Security and transparency
 
-This program injects its companion DLL into `AzerothSurvivors.exe` to modify the process clock. This may trigger antivirus heuristics. Only run binaries from a source you trust; inspect/build the code yourself where possible. Never disable antivirus protection just to run this tool. There is no network updater or telemetry in the reviewed source. Please report suspected security issues privately (see [SECURITY.md](SECURITY.md)).
+**Current RC3 VirusTotal results (2026-10-20): EXE 6/61, DLL 2/70, ZIP 2/67. Microsoft Defender flags the RC3 EXE as `Trojan:Win32/Wacatac.B!ml`.** These are not confirmed false positives. The controller injects its companion DLL into `AzerothSurvivors.exe` and hooks Windows timing APIs, which may trigger antivirus heuristics. **Do not disable antivirus protection or bypass security warnings just to run this tool.** Read the full [VirusTotal reports, exact hashes, detection names and safety guidance](docs/VIRUSTOTAL-TRANSPARENCY.md). No network updater or telemetry was identified in the reviewed application source; this does not establish binary safety. Please report suspected security issues privately (see [SECURITY.md](SECURITY.md)).
 
 ## Compatibility and limitations
 
@@ -62,11 +62,11 @@ The UI supports 14 languages, including the shortcut editor and speed profiles. 
 
 ## Code audit
 
-See [CODE-AUDIT.md](CODE-AUDIT.md) for architecture, known risks and the release checklist. The v1.3.0-rc1 changes have not been compiled in this environment.
+See [CODE-AUDIT.md](CODE-AUDIT.md) for architecture, known risks and the release checklist. The current RC3 was built and tested on the maintainer's Windows PC and passed the GitHub Actions Windows build; a full independent security audit and reproducible-build verification have not been completed.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). The repository includes a proposed **MIT license**; the maintainer must confirm ownership and approve its copyright attribution before publishing. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md). The repository includes an MIT license; the maintainer is responsible for confirming ownership, copyright attribution, and third-party licensing compliance. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 
 Release acceptance criteria: [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md).

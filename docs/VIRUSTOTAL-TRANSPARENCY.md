@@ -1,38 +1,39 @@
-# Antivirus / VirusTotal transparency (v1.3.0 RC2)
+# Antivirus and VirusTotal transparency — v1.3.0 RC3
 
-AZS Speed Controller uses Windows process access and DLL injection to load its companion DLL into the local Azeroth Survivors process. The DLL uses MinHook to intercept Windows timing APIs. This behavior resembles techniques used by malware, so heuristic antivirus engines may flag the program even when it is used for its documented purpose.
+AZS Speed Controller is an unofficial Windows x64 tool for offline Azeroth Survivors. It accesses the game's process, injects its companion `AZSSpeedHook.dll`, and uses MinHook to intercept timing APIs. Antivirus products may flag these behaviors, but **the developer's intended use and heuristic detection names do not establish that any detection is a false positive**.
 
-## Maintainer-reported RC1 scan results (2026-10-20)
+## RC3 release-file results (maintainer screenshots, 2026-10-20)
 
-- `AZSSpeedController.exe`: 4 / 71 VirusTotal engines flagged the submitted sample.
-- `AZSSpeedHook.dll`: 2 / 70 engines flagged the submitted sample.
-- Release ZIP: 1 / 68 engines flagged the submitted sample.
-- Maintainer's targeted Microsoft Defender scans reported zero threats.
+| File | VirusTotal detections | SHA-256 | Report |
+| --- | --- | --- | --- |
+| `AZSSpeedController.exe` | **6 / 61** | `5894e9dd3ead89926be19031cd1c2e27bf2d9bbce7ed054829ec7793082c9ae1` | [VirusTotal EXE](https://www.virustotal.com/gui/file/5894e9dd3ead89926be19031cd1c2e27bf2d9bbce7ed054829ec7793082c9ae1) |
+| `AZSSpeedHook.dll` | **2 / 70** | `a42dbc80ec522758de2a4b91a403edb48d06c44047f4ffc4da8d332bdc8e49ef` | [VirusTotal DLL](https://www.virustotal.com/gui/file/a42dbc80ec522758de2a4b91a403edb48d06c44047f4ffc4da8d332bdc8e49ef) |
+| `AZS-Speed-Controller-v1.3.0-rc3-Windows-x64.zip` | **2 / 67** | `a298a916858b12f7a3102c6115e209f3641529d040ed419cec17ed3acac6b570` | [VirusTotal ZIP](https://www.virustotal.com/gui/file/a298a916858b12f7a3102c6115e209f3641529d040ed419cec17ed3acac6b570) |
 
-These results refer **only to RC1 samples**, not to RC2. Detection counts may change after reanalysis. Neither low detection counts nor a clean Defender scan prove a binary is safe.
+The screenshots showed these detection names:
 
-RC1 VirusTotal sample identifiers (SHA-256):
+- **EXE:** Microsoft `Trojan:Win32/Wacatac.B!ml`; CrowdStrike Falcon `Win/malicious_confidence_60% (D)`; Malwarebytes `Malware.Heuristic.108256`; MaxSecure `Trojan.Malware.300983.susgen`; SecureAge `Malicious`; Trapmine `Malicious.high.ml.score`.
+- **DLL:** CrowdStrike Falcon `Win/malicious_confidence_60% (D)`; Cynet `Malicious (score: 100)`.
+- **ZIP:** Malwarebytes `Malware.Heuristic.108256`; MaxSecure `Trojan.Malware.300983.susgen`.
 
-- EXE: `02cdcd17f6fa2963b4ce62fbe1db5c1aa79d13ee376f704ad1de7006ecd58dde`
-- DLL: `5b7f006444497e22f16be4581365284e82901a79381a5efde3ba63207eb612a3`
-- ZIP: `38c1495c257609f73453ec4400529b602a6818f2763de25a3f6b5449ddaf689d`
+**Microsoft Defender currently flags the RC3 EXE.** Previous EXE/DLL samples were submitted to Microsoft for review, but their status does not establish clearance for these new RC3 hashes. No vendor has been confirmed to have classified these exact RC3 files as false positives. Results may change after reanalysis.
 
-## Why some behavior labels appear
+## Why this software is sensitive to antivirus scanning
 
-- **Process injection / shared modules**: the controller loads `AZSSpeedHook.dll` into the game process.
-- **Execution-flow modification**: MinHook redirects timing API calls.
-- **Input capture**: controller uses Windows hotkeys and keyboard state to support remappable shortcuts; no keystroke logging mechanism was found in the reviewed application sources.
-- **Impair defenses / anti-analysis**: sandbox labels are not proof of intent. Investigate the specific events and dependencies rather than assuming the labels are benign or malicious.
-- **Network activity**: no application networking mechanism was found in the reviewed C++ sources, and the supplied sandbox screenshots showed no network communications. Neither observation proves absence under all conditions.
+- The controller opens a game process and loads a DLL into it.
+- The DLL redirects timing APIs using MinHook to adjust apparent game time.
+- Global hotkeys and shared memory are used for the controller interface.
 
-## Verification and distribution
+These operations overlap with techniques used by unwanted or malicious software. Source inspection and successful compilation are useful transparency measures, **not** independent proof that distributed binaries are safe.
 
-1. Obtain binaries from the official GitHub release and verify `SHA256SUMS.txt` against the downloaded ZIP.
-2. Review the public sources and build workflow. Published binaries are not automatically proven identical to a local build; reproducible-build verification has not been established.
-3. Keep Microsoft Defender enabled. Do not whitelist or disable protection solely to run this software.
-4. Use only with game versions and environments where modification is permitted; avoid online/competitive use.
-5. Report suspicious behavior through the repository security policy.
+## Before downloading or running
 
-## RC2 validation status
+1. Download only from the [official GitHub releases](https://github.com/KevinRadlowski/AZS-Speed-Controller/releases).
+2. Verify the release ZIP's SHA-256 against `SHA256SUMS.txt` (the hash for the ZIP listed above is specific to the locally packaged RC3 file scanned on 2026-10-20).
+3. Review the source code, build workflow, and [security policy](../SECURITY.md). Reproducible-build equivalence has **not** been established.
+4. **Do not disable Microsoft Defender, add broad antivirus exclusions, or bypass security warnings just to run the tool.** If your protection blocks it, leave it blocked and await vendor review or build/review the sources in an appropriately isolated environment.
+5. Use only offline/single-player and where game rules permit modifications.
 
-RC2 contains a change to hook setup and rollback. It is a **source candidate** until CI and local Windows/game testing succeed. RC1 VirusTotal results must not be presented as RC2 scan results.
+## Historical results
+
+RC1 samples were previously reported as EXE 4/71, DLL 2/70, and ZIP 1/68. Those figures apply only to the older RC1 hashes and must not be confused with the RC3 results above.
