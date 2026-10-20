@@ -1,0 +1,26 @@
+name: Windows build
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -A x64
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Package
+        shell: pwsh
+        run: ./scripts/package-release.ps1
+      - name: Upload candidate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AZS-Speed-Windows-x64-candidate
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error

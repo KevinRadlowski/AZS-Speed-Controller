@@ -1,0 +1,12 @@
+build/
+dist/
+.vs/
+.vscode/
+*.user
+*.suo
+*.obj
+*.pdb
+*.ilk
+*.log
+AZSSpeedController.ini
+.DS_Store
