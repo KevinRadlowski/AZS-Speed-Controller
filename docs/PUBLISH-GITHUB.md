@@ -1,21 +1,14 @@
-# Publish to GitHub (maintainer steps)
+# GitHub publication — RC3 (maintainer procedure)
 
-1. Confirm you own the source rights and approve the proposed MIT license and copyright attribution in `LICENSE`. Verify permission to distribute a speed-modifying utility under the game rules.
-2. Create a **public** repository named `AZS-Speed-Controller` on GitHub, without initializing extra files.
-3. From this source directory run:
+**Do not publish as stable until security and Windows testing gates pass.** The submitted Microsoft EXE/DLL cases are independent and may still be pending.
 
-```powershell
-git init
-git add .
-git commit -m "Prepare v1.3.0-rc1 pre-release"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/AZS-Speed-Controller.git
-git push -u origin main
-```
+The source archive prepared in this handoff intentionally excludes `.git`, `build` and `dist`. To preserve your existing Git history and uncommitted changes, apply reviewed edits to your original working tree rather than running `git init` or force-pushing over it.
 
-4. Wait for the Windows build workflow to finish successfully on GitHub.
-5. Rebuild this updated source locally, run the test checklist, and regenerate `dist` (the previous binary ZIP was built **before** the final code changes).
-6. Compare checksums, create tag `v1.3.0-rc1`, and create a **Pre-release** in GitHub Releases using `docs/GITHUB-RELEASE-DRAFT.md`. Attach the freshly generated Windows ZIP and `SHA256SUMS.txt`.
-7. Do not label it stable or claim clean-PC validation.
-
-Screenshots: add only real captures of the current UI (e.g. `assets/`); do not present generated mockups as screenshots.
+1. Inspect `git status`, `git diff`, `git remote -v` and the current branch in your original local repository.
+2. Review `docs/RC3-HANDOFF-AUDIT.md`, source changes and license/third-party notices.
+3. Run `cmake -S . -B build -A x64` and `cmake --build build --config Release` on Windows with MSVC.
+4. Test all release gates from `docs/RELEASE-CHECKLIST.md` and review Microsoft verdicts for each shipped binary.
+5. Run `./scripts/package-release.ps1` in PowerShell and verify `dist/SHA256SUMS.txt` and `dist/SHA256-BINARIES.txt`.
+6. Commit the reviewed source changes to your existing repository, then push normally. Avoid committing `build/`, `dist/`, configuration files or local secrets.
+7. Create a GitHub **pre-release** for the verified RC3 build, attach the ZIP and both SHA-256 manifests, and clearly disclose DLL injection/time-hook functionality and antivirus review status.
+8. Do not claim a reproducible or malware-free build until independently verified.

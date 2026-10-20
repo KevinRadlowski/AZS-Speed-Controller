@@ -17,4 +17,5 @@ target_link_libraries(AZSSpeedController PRIVATE dwmapi comctl32)
 
 if(MSVC)
   target_compile_options(AZSSpeedController PRIVATE /utf-8)
+  target_compile_options(AZSSpeedHook PRIVATE /utf-8)
 endif()

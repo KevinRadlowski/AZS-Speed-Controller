@@ -23,4 +23,5 @@ jobs:
           path: |
             dist/*.zip
             dist/SHA256SUMS.txt
+            dist/SHA256-BINARIES.txt
           if-no-files-found: error

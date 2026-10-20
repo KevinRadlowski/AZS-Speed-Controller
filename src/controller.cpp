@@ -234,14 +234,29 @@ static void resizeOverlay() {
   SetWindowPos(windowHandle,alwaysOnTop?HWND_TOPMOST:HWND_NOTOPMOST,0,0,compact?compactWidth:widths,compact?compactHeight:heights,SWP_NOMOVE|SWP_NOACTIVATE);
   InvalidateRect(windowHandle,nullptr,TRUE);
 }
+// Refuse ambiguous matches instead of injecting into an arbitrary same-named process.
+// QueryFullProcessImageNameW also confirms the name from the actual process image.
 static DWORD findGame() {
   HANDLE snap=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
   if(snap==INVALID_HANDLE_VALUE) return 0;
-  PROCESSENTRY32W entry{sizeof(entry)}; DWORD found=0;
+  PROCESSENTRY32W entry{sizeof(entry)};
+  DWORD found=0;
+  unsigned matches=0;
   if(Process32FirstW(snap,&entry)) do {
-    if(_wcsicmp(entry.szExeFile,L"AzerothSurvivors.exe")==0) {found=entry.th32ProcessID;break;}
+    if(_wcsicmp(entry.szExeFile,L"AzerothSurvivors.exe")!=0) continue;
+    HANDLE candidate=OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION,FALSE,entry.th32ProcessID);
+    if(!candidate) continue;
+    wchar_t image[32768]={}; DWORD length=32768;
+    if(QueryFullProcessImageNameW(candidate,0,image,&length) &&
+       _wcsicmp(std::filesystem::path(image).filename().c_str(),L"AzerothSurvivors.exe")==0) {
+      found=entry.th32ProcessID;
+      ++matches;
+    }
+    CloseHandle(candidate);
   } while(Process32NextW(snap,&entry));
-  CloseHandle(snap); return found;
+  CloseHandle(snap);
+  if(matches>1) { status=L"Multiple game processes found; close extra copies"; return 0; }
+  return matches==1 ? found : 0;
 }
 static bool connectMap(DWORD processId) {
   wchar_t name[96]; wsprintfW(name,L"Local\\AZSSpeed_%lu",processId);
@@ -255,7 +270,40 @@ static bool inject(DWORD processId) {
   wchar_t controllerPath[MAX_PATH] = {};
   if (!GetModuleFileNameW(nullptr, controllerPath, MAX_PATH)) { status=L"Cannot resolve controller location"; return false; }
   auto dll=(std::filesystem::path(controllerPath).parent_path() / L"AZSSpeedHook.dll").wstring();
-  if(!std::filesystem::exists(dll)) {status=L"Missing AZSSpeedHook.dll";return false;}
+  // Only use a regular 64-bit DLL from the controller directory.
+  std::error_code fileError;
+  if(!std::filesystem::is_regular_file(dll,fileError) || fileError) {status=L"Missing AZSSpeedHook.dll";return false;}
+  // GetBinaryTypeW may reject DLL images. Inspect the PE headers instead.
+  bool validDll = false;
+  HANDLE dllFile = CreateFileW(dll.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (dllFile != INVALID_HANDLE_VALUE) {
+    IMAGE_DOS_HEADER dos = {};
+    DWORD bytesRead = 0;
+    LARGE_INTEGER fileSize = {};
+    if (GetFileSizeEx(dllFile, &fileSize) && fileSize.QuadPart >= 1024 &&
+        ReadFile(dllFile, &dos, sizeof(dos), &bytesRead, nullptr) &&
+        bytesRead == sizeof(dos) && dos.e_magic == IMAGE_DOS_SIGNATURE &&
+        dos.e_lfanew >= static_cast<LONG>(sizeof(dos)) &&
+        static_cast<LONGLONG>(dos.e_lfanew) + sizeof(IMAGE_NT_HEADERS64) <= fileSize.QuadPart) {
+      LARGE_INTEGER offset = {};
+      offset.QuadPart = dos.e_lfanew;
+      IMAGE_NT_HEADERS64 nt = {};
+      if (SetFilePointerEx(dllFile, offset, nullptr, FILE_BEGIN) &&
+          ReadFile(dllFile, &nt, sizeof(nt), &bytesRead, nullptr) &&
+          bytesRead == sizeof(nt)) {
+        validDll = nt.Signature == IMAGE_NT_SIGNATURE &&
+                   nt.FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 &&
+                   (nt.FileHeader.Characteristics & IMAGE_FILE_DLL) != 0 &&
+                   nt.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC;
+      }
+    }
+    CloseHandle(dllFile);
+  }
+  if (!validDll) {
+    status=L"AZSSpeedHook.dll is missing, unreadable or not a valid x64 DLL";
+    return false;
+  }
   HANDLE process=OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ,FALSE,processId);
   if(!process) {status=L"Cannot access game process";return false;}
   SIZE_T bytes=(dll.size()+1)*sizeof(wchar_t);
@@ -297,7 +345,7 @@ static void disconnect() {
 static void refresh() {
   DWORD current=findGame();
   if(current!=pid) disconnect();
-  if(!current) {status=L"Waiting for AzerothSurvivors.exe";InvalidateRect(windowHandle,nullptr,TRUE);return;}
+  if(!current) {if(status!=L"Multiple game processes found; close extra copies") status=L"Waiting for AzerothSurvivors.exe";InvalidateRect(windowHandle,nullptr,TRUE);return;}
   pid=current;
   if(!shared && connectMap(pid)) {hooked=true;status=L"Connected";setSpeed(speed100);}
   if(!shared && !hooked) {
