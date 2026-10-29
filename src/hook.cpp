@@ -4,6 +4,7 @@
 #include <MinHook.h>
 #include <mutex>
 #include <cstdint>
+#include "timer_fix.h"
 
 struct Shared { volatile LONG speed100; volatile LONG active; };
 static Shared* shared = nullptr;
@@ -20,10 +21,14 @@ static TimeFn originalTime = nullptr;
 struct Clock { uint64_t real = 0, virtualTime = 0; LONG speed = 100; bool initialized = false; };
 static Clock qpcClock, tickClock, tick64Clock, timeClock;
 
+static LONG readSpeed() {
+  LONG value = shared ? InterlockedCompareExchange(&shared->speed100,0,0) : 100;
+  return value >= 100 && value <= 2500 ? value : 100;
+}
+
 static uint64_t scaleClock(Clock& c, uint64_t now) {
   std::lock_guard<std::mutex> guard(timeLock);
-  LONG next = shared ? InterlockedCompareExchange(&shared->speed100, 0, 0) : 100;
-  if(next < 100 || next > 2500) next = 100;
+  LONG next = readSpeed();
   if(!c.initialized) { c.real=now; c.virtualTime=now; c.speed=next; c.initialized=true; return now; }
   uint64_t delta = now >= c.real ? now-c.real : 0;
   c.virtualTime += (delta * static_cast<uint64_t>(c.speed)) / 100;
@@ -74,6 +79,7 @@ static DWORD WINAPI init(LPVOID) {
     createHook(kernel,"GetTickCount",reinterpret_cast<LPVOID>(hookedTick),reinterpret_cast<LPVOID*>(&originalTick)) &&
     createHook(kernel,"GetTickCount64",reinterpret_cast<LPVOID>(hookedTick64),reinterpret_cast<LPVOID*>(&originalTick64)) &&
     createHook(winmm,"timeGetTime",reinterpret_cast<LPVOID>(hookedTime),reinterpret_cast<LPVOID*>(&originalTime));
+  const bool timerReady = created && prepareTimerFix(readSpeed,&shared->active);
   if(!created || MH_EnableHook(MH_ALL_HOOKS)!=MH_OK) {
     // No active hook should remain after a failed initialization.
     MH_DisableHook(MH_ALL_HOOKS);
@@ -84,7 +90,7 @@ static DWORD WINAPI init(LPVOID) {
     return 0;
   }
   // Controller connects only after all expected hooks have been enabled.
-  InterlockedExchange(&shared->active,1);
+  InterlockedExchange(&shared->active,timerReady ? 2 : 1);
   // Keep mapping and winmm loaded while hooks are active. Windows reclaims
   // them at process exit; unhooking in DllMain during teardown is unsafe.
   return 0;

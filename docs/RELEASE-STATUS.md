@@ -1,25 +1,10 @@
-# v1.3.0-rc1 release status — 2026-10-20
+# v1.3.1 release status — 2026-10-29
 
-## Verified by maintainer on Windows
-
-- CMake configured with Visual Studio 2026 and MSVC.
-- Release build produced EXE and DLL.
-- PowerShell packaging generated Windows ZIP and SHA256SUMS.txt.
-- Archive extracted to a separate Desktop folder; maintainer confirmed it works there.
-
-## New source changes since that successful build (NOT RETESTED)
-
-- Failed shortcut registration no longer erases the stored key assignment.
-- Remote DLL path memory is freed after completed remote-thread failures, not only on success.
-- DLL reports active only after all four hooks are enabled.
-- MIT license proposed, MinHook license packaging, issue templates, release documentation.
-
-## Remaining release gates
-
-- Rebuild and retest the **updated** sources.
-- Confirm MinHook license file is packaged and CI passes.
-- Owner must approve copyright/license and game permissions.
-- Other-PC/clean-machine test unavailable; disclose this limitation prominently.
-- All-language/DPI and failure-path testing remains incomplete.
-
-This is a pre-release candidate, not a security certification or stable release.
+- Windows x64 chrono preview: maintainer confirmed game timer acceleration through ×25 on the supplied game 0.127.0 EXE.
+- Release preserves the tested hook implementation. Controller title/version labels updated to v1.3.1.
+- Release EXE/DLL cross-built with MinGW-w64 13 POSIX, static GCC/pthread runtimes; MinHook v1.3.4 pinned.
+- Timer policy, uploaded-EXE signatures and PE imports checked. CI now runs the policy test in Release configuration with assertions enabled.
+- Windows/MSVC CI for this release, independent clean-machine tests, coop tests and new antivirus scan: pending, not claimed.
+- Exact EXE hash plus in-memory signatures gate the chrono hook; unsupported builds retain classic timing hooks.
+- Linux prototype remains separate and has not received this Windows-only fix.
+- GitHub publication requires authenticated repository access. A prepared archive/commit does not mean a public release exists.

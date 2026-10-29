@@ -1,3 +1,14 @@
+# Changelog
+
+## 1.3.1 — 2026-10-29
+
+- Fix the game timer plateau above approximately ×4 by scaling the local simulation thread's 25 ms wait. The maintainer confirmed the preview works through ×25 on the supplied Azeroth Survivors 0.127.0 Windows executable.
+- Enable the targeted hook only after full EXE SHA-256, PE metadata and in-memory instruction checks. Unrecognized builds retain classic clock hooks and explicitly show that the chrono fix is unavailable.
+- Show whether the chrono hook is armed or its matching call has been observed; wait for hook initialization before reporting a connection.
+- Keep the game file on disk unchanged and leave unrelated Rust waits untouched.
+- Update visible version labels, packaging and add a timer-policy test to Windows CI. Support static MinGW cross-builds.
+- Validation: portable Windows x64 binaries cross-compiled; native timer-policy test passed; the game test was performed with the preceding preview and the release preserves its hook implementation. New MSVC CI, other-PC, coop and antivirus validation remain pending.
+
 ## Unreleased — GitHub preparation after v1.3.0-rc1 Windows test
 
 - Preserve saved shortcut assignments when registration fails.
@@ -31,7 +42,6 @@
 - Add source audit, localization notes, and updated build/release documentation.
 - No Windows build or runtime verification performed in this environment.
 
-# Changelog
 
 ## [1.2.1] - Source candidate (unreleased)
 - Added remappable shortcuts for all supported actions, with INI persistence and collision checks.

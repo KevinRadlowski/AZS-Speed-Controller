@@ -264,6 +264,10 @@ static bool connectMap(DWORD processId) {
   if(!mapHandle) return false;
   shared=static_cast<Shared*>(MapViewOfFile(mapHandle,FILE_MAP_ALL_ACCESS,0,0,sizeof(Shared)));
   if(!shared) {CloseHandle(mapHandle);mapHandle=nullptr;return false;}
+  // The DLL publishes its mapping before hashing/initializing: wait for readiness.
+  if(InterlockedCompareExchange(&shared->active,0,0)<=0) {
+    UnmapViewOfFile(shared);shared=nullptr;CloseHandle(mapHandle);mapHandle=nullptr;return false;
+  }
   return true;
 }
 static bool inject(DWORD processId) {
@@ -353,6 +357,12 @@ static void refresh() {
     if(inject(pid)) { for(int i=0;i<12 && !shared;i++) {Sleep(50);connectMap(pid);} }
     if(shared) {hooked=true;status=L"Connected";setSpeed(100);}
   }
+  if(shared) {
+    LONG ready=InterlockedCompareExchange(&shared->active,0,0);
+    if(ready==3) status=tr(L"Chrono: call observed",L"Chrono : appel détecté");
+    else if(ready==2) status=tr(L"Chrono: armed (0.127.0)",L"Chrono : prêt (0.127.0)");
+    else status=tr(L"Chrono fix unavailable",L"Correctif chrono indisponible");
+  }
   InvalidateRect(windowHandle,nullptr,TRUE);
 }
 static void drawBorder(HDC dc, RECT rect, COLORREF color, int thickness) {
@@ -380,7 +390,7 @@ static void paint(HWND hwnd) {
   SetTextColor(dc,RGB(237,193,111));
   RECT header{14,11,w-95,34};
   DrawTextW(dc,compact?L"AZEROTH  /  SPEED":tr(L"AZEROTH  /  SPEED CONTROL",L"AZEROTH  /  CONTROLE VITESSE"),-1,&header,DT_SINGLELINE|DT_END_ELLIPSIS);
-  if(!compact) { SetTextColor(dc,RGB(181,146,91));RECT vr{w-116,35,w-16,55};DrawTextW(dc,L"v1.2.3",-1,&vr,DT_RIGHT|DT_SINGLELINE); }
+  if(!compact) { SetTextColor(dc,RGB(181,146,91));RECT vr{w-116,35,w-16,55};DrawTextW(dc,L"v1.3.1",-1,&vr,DT_RIGHT|DT_SINGLELINE); }
   // Custom close button: always visible in both overlay sizes.
   if(!compact) {
     RECT cfg{w-57,11,w-34,29};
@@ -536,7 +546,7 @@ static void paintSettings(HWND hwnd) {
   panelRect(dc,{363,353,394,378},alwaysOnTop?RGB(125,89,37):RGB(41,44,50),alwaysOnTop?RGB(231,174,80):RGB(91,88,79));
   if(alwaysOnTop) {RECT dot{373,359,385,371};HBRUSH b=CreateSolidBrush(RGB(255,225,153));HBRUSH old=(HBRUSH)SelectObject(dc,b);Ellipse(dc,dot.left,dot.top,dot.right,dot.bottom);SelectObject(dc,old);DeleteObject(b);}
   panelText(dc,tr(L"Settings are saved automatically",L"Paramètres enregistrés automatiquement"),25,390,290,22,RGB(140,139,131),12);
-  panelText(dc,L"v1.2.3",342,390,65,22,RGB(204,155,77),12,true);
+  panelText(dc,L"v1.3.1",342,390,65,22,RGB(204,155,77),12,true);
   panelRect(dc,{25,419,195,459},RGB(42,35,28),RGB(180,130,52));
   panelText(dc,aux(AUX_0),34,422,158,30,RGB(241,192,102),13,true);
   panelRect(dc,{206,419,395,459},RGB(42,35,28),RGB(180,130,52));
@@ -717,7 +727,7 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE,LPWSTR,int) {
   WNDCLASSW sw{};sw.lpfnWndProc=settingsProc;sw.hInstance=instance;sw.lpszClassName=L"AZSSpeedSettings";sw.hCursor=LoadCursorW(nullptr,MAKEINTRESOURCEW(32512));sw.hbrBackground=nullptr;RegisterClassW(&sw);
   WNDCLASSW kc{};kc.lpfnWndProc=shortcutProc;kc.hInstance=instance;kc.lpszClassName=L"AZSSpeedShortcuts";kc.hCursor=LoadCursorW(nullptr,MAKEINTRESOURCEW(32512));RegisterClassW(&kc);
   WNDCLASSW pc{};pc.lpfnWndProc=profilesProc;pc.hInstance=instance;pc.lpszClassName=L"AZSSpeedProfiles";pc.hCursor=LoadCursorW(nullptr,MAKEINTRESOURCEW(32512));RegisterClassW(&pc);
-  windowHandle=CreateWindowExW((alwaysOnTop?WS_EX_TOPMOST:0)|WS_EX_APPWINDOW|WS_EX_LAYERED,L"AZSSpeedOverlay",L"AZS Speed Controller",WS_POPUP|WS_SYSMENU|WS_MINIMIZEBOX,savedX,savedY,compact?compactWidth:widths,compact?compactHeight:heights,nullptr,nullptr,instance,nullptr);
+  windowHandle=CreateWindowExW((alwaysOnTop?WS_EX_TOPMOST:0)|WS_EX_APPWINDOW|WS_EX_LAYERED,L"AZSSpeedOverlay",L"AZS Speed Controller v1.3.1",WS_POPUP|WS_SYSMENU|WS_MINIMIZEBOX,savedX,savedY,compact?compactWidth:widths,compact?compactHeight:heights,nullptr,nullptr,instance,nullptr);
   if(!windowHandle) {CloseHandle(singletonMutex);singletonMutex=nullptr;return 1;}
   applyOpacity();
   registerShortcuts(windowHandle);

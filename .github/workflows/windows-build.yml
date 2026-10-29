@@ -13,6 +13,8 @@ jobs:
         run: cmake -S . -B build -A x64
       - name: Build
         run: cmake --build build --config Release
+      - name: Test timer policy
+        run: ctest --test-dir build -C Release --output-on-failure
       - name: Package
         shell: pwsh
         run: ./scripts/package-release.ps1
@@ -25,3 +27,22 @@ jobs:
             dist/SHA256SUMS.txt
             dist/SHA256-BINARIES.txt
           if-no-files-found: error
+  publish-v131:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Release v1.3.1'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release-v1.3.1
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: AZS-Speed-Windows-x64-candidate
+          path: dist
+      - name: Publish v1.3.1 after successful Windows build and tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/publish-v131.py

@@ -1,6 +1,6 @@
 # Package the exact binaries produced by a successful Release build.
 $ErrorActionPreference = 'Stop'
-$version = '1.3.0-rc3'
+$version = '1.3.1'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $release = Join-Path $root 'build\Release'
 $dist = Join-Path $root 'dist'
@@ -20,6 +20,7 @@ New-Item -ItemType Directory -Path $folder | Out-Null
 foreach ($name in $files) { Copy-Item (Join-Path $release $name) $folder }
 Copy-Item (Join-Path $root 'README-PLAYERS.txt') (Join-Path $folder 'README.txt')
 Copy-Item (Join-Path $root 'LICENSE') (Join-Path $folder 'LICENSE.txt')
+Copy-Item (Join-Path $root 'docs\RELEASE-NOTES-v1.3.1.md') (Join-Path $folder 'RELEASE-NOTES.md')
 $minhookLicense = Join-Path $root 'build\_deps\minhook-src\LICENSE.txt'
 if (-not (Test-Path $minhookLicense -PathType Leaf)) { throw 'MinHook LICENSE.txt not found; cannot package without third-party notice.' }
 Copy-Item $minhookLicense (Join-Path $folder 'MINHOOK-LICENSE.txt')

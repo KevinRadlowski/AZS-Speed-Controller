@@ -1,22 +1,24 @@
-# v1.3.0-rc1 — GitHub pre-release draft
+# AZS Speed Controller v1.3.1
 
-**AZS Speed Controller** is an unofficial, portable Windows x64 speed controller for *Azeroth Survivors*.
+The game timer now keeps accelerating beyond ×5 on the tested Azeroth Survivors 0.127.0 build. The maintainer confirmed the chrono preview works through ×25 on Windows; this release keeps the same hook implementation.
 
-### Highlights
-- Speed presets ×1, ×2, ×5, ×10 and custom up to ×25 (above ×10 experimental).
-- In-game overlay, configurable shortcuts, three profiles, and 14 interface languages.
-- Portable EXE + companion DLL; settings in a local INI file.
+- Scales the local simulation wait with the selected speed.
+- Checks the exact game executable before enabling the chrono fix.
+- Shows when the fix is ready and when the simulation call has been detected.
+- Preserves shortcuts, custom speeds, profiles and the existing overlay.
 
-### Installation
-1. Download `AZS-Speed-Controller-v1.3.0-rc1-Windows-x64.zip` below.
-2. Extract all files to a writable folder; keep the EXE and DLL together.
-3. Run Azeroth Survivors and `AZSSpeedController.exe`.
+**Updating:** close the game and previous controller completely, extract the ZIP, then launch the game and new controller. Keep the EXE and DLL together. No game files need replacing. F6 returns to ×1.
 
-### Transparency and warnings
-- Unofficial community project; not affiliated with the game creators.
-- Uses DLL injection to alter game timing. Antivirus heuristics may flag it; do not disable your protection.
-- Windows x64 only. Extreme speeds may destabilize gameplay. Use only where allowed.
-- **Pre-release:** tested on one developer Windows machine, not a separate clean PC; compatibility and translation review remain incomplete.
+**Compatibility:** Windows x64. Chrono fix validated on one 0.127.0 executable only (SHA-256 `3ef9d74c30bb6b435d739b3d960c8535486836c540e0d8c20f98549a6f1dcbbb`). Another build uses classic clock acceleration and displays “Chrono fix unavailable”. Coop and other-PC tests are unvalidated. The Linux prototype is not included in this release.
 
-### Files
-Attach the Windows ZIP and `SHA256SUMS.txt` from `dist/`. Verify hashes before publishing.
+**Validation:** cross-compiled Windows binaries and timer-policy tests passed. The preceding preview was tested in game by the maintainer through ×25. Final release changes to the controller are version labels/title only; the locally prepared MinGW DLL is byte-identical to the tested preview. GitHub release assets are rebuilt with MSVC and therefore have different hashes. The new Windows/MSVC CI has not yet run. No new antivirus scan: historical RC3 reports do not cover these files.
+
+The tool injects its companion DLL and redirects timing functions in memory. It does not modify the game EXE on disk. Higher speeds can increase CPU use and cause instability.
+
+---
+
+Le chrono suit maintenant l'accélération au-delà de ×5 sur l'EXE 0.127.0 testé. Le correctif a été confirmé jusqu'à ×25 par le mainteneur.
+
+Pour mettre à jour : fermez complètement le jeu et l'ancien contrôleur, extrayez le ZIP, puis relancez le jeu et le nouveau contrôleur. Gardez l'EXE et la DLL ensemble. F6 revient à ×1.
+
+Le correctif reconnaît uniquement l'EXE testé : une mise à jour du jeu demandera une nouvelle vérification. Test effectué sur une seule configuration Windows ; coop et autres PC non validés. Aucun nouveau scan antivirus effectué pour cette version.
